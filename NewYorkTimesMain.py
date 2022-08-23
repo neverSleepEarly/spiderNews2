@@ -16,18 +16,15 @@ if __name__ == '__main__':
     newsTotalList = []
 
     STOP_FLAG = [False]
-    while not STOP_FLAG[0]:
+    while (not STOP_FLAG[0]) and (pageNum != maxPage):
         response = getHttpResponse(NYChineseURL.format(section=sections["中国"], pageNum=pageNum))
         # print(type(response))
         html = etree.HTML(response.text)
         # print(type(html))
         newsTotalList.extend(parseNewsListNY(html, oldNews, STOP_FLAG))
 
-        if pageNum == maxPage:
-            break
-        else:
-            # 页码加1
-            pageNum += 1
+        # 页码加1
+        pageNum += 1
 
     for newsDict in newsTotalList:
         print(newsDict["title"])

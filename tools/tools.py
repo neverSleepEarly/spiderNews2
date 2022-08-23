@@ -18,9 +18,18 @@ def checkLastNews(newNews, oldNews):
         return newNews["date"] == oldNews["date"] and newNews["title"][-3:] == oldNews["title"][-3:]
 
 
-def getYMD():
-    today = datetime.datetime.now()
+def getYMD(delta=0):
+    today = datetime.datetime.now() + datetime.timedelta(days=delta)
     year = today.year
     month = today.month
     day = today.day
     return year, month, day
+
+
+def time2TimeFormat(time):
+    pass
+
+
+def timeFormat2Time(timeFormat):
+    time = timeFormat.replace("T", " ").split("+")[0]
+    return time

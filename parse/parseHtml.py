@@ -299,50 +299,91 @@ def parseNewsListRFI(html, breakPoint, stopFlag):
             stopFlag[0] = True
             print(stopFlag)
             break
-        print(newsDict)
+        print(newsDict["title"])
         newsList.append(newsDict)
-    print(newsList)
     return newsList
 
 
 # 爬取法广中文网新闻详情页
-def parseNewsContentNY(html):
+def parseNewsContentRFI(html):
     newsDict = {}
     try:
         # 获取新闻内容的包裹节点，<article class="article-content font-normal">
-        articleContent = getFromList(html.xpath("//article[@class='article-content font-normal']"))
+        articleContent = getFromList(html.xpath("//div[@class='t-content t-content--article']/article"))
 
-
-        # 获取新闻发表时间节点，<span class="date-time">
-        time = getFromList(articleContent.xpath("./div[@class='article-header']/div[@class='byline-row']//time"))
-        newsTime = getFromList(time.xpath("./@pudate"))
-        # time.xpath("./@datetime")
+        # 获取新闻发表时间节点
+        time = getFromList(articleContent.xpath("./div[@class='t-content__dates']/p[@class='m-pub-dates']/span/time"))
+        newsFormatTime = getFromList(time.xpath("./@datetime"))
+        newsTime = timeFormat2Time(newsFormatTime)
 
         # 获取新闻图片url
-        figure = getFromList(html.xpath("//figure[@class='article-span-photo']"))
-        newsPicUrl = getFromList(figure.xpath("./img/@src"))
-        newsPicTitle = getFromList(figure.xpath("./img/@alt"))
+        figure = getFromList(articleContent.xpath("./div[@class='t-content__main-media']/figure"))
+        newsMediaType = getFromList(figure.xpath("./picture/source/@type"))
+        srcset = getFromList(figure.xpath("./picture/img/@srcset"))
+        newsPicUrl = srcset.split(",")[-1].split(" ")[0]
+        newsPicTitle = getFromList(figure.xpath("./picture/img/@alt"))
+
+        # 获取作者
+        # newsAuthor = getFromList(articleContent.xpath(".//div[@class='t-content__authors-tts']//a[@class='m-from-author__name']/text()]"))
+
+        # 获取简介
+        newsDesc = getFromList(articleContent.xpath("./p[@class='t-content__chapo']/text()"))
 
         # 获取新闻内容包裹节点，<div class="wsw">
-        divArticlePartialList = html.xpath("//section[@class='article-body']//div[@class='article-partial']")
+        pList = articleContent.xpath("./div[@class='t-content__body u-clearfix']/p")
 
         newContent = ""
-        for divArticlePartial in divArticlePartialList:
+        for p in pList:
             # 获取新闻内容
-            paragraph = "".join(divArticlePartial.xpath("./div[@class='article-body-item col-lg-5']//div[@class='article-paragraph']//text()"))
+            paragraph = "".join(p.xpath("./text()"))
             paragraph += "\n"
             newContent += paragraph
 
         newsDict["time"] = newsTime
         newsDict["timeFormat"] = newsTime
+        newsDict["MediaType"] = newsMediaType
+        # newsDict["author"] = newsAuthor
+        newsDict["desc"] = newsDesc
         newsDict["picUrl"] = newsPicUrl
         newsDict["picTitle"] = newsPicTitle
         newsDict["content"] = newContent
 
-        # 获取视频url节点，<video ...>
-        newsVideoUrl = getFromList(html.xpath("//a[@class='c-mmp__fallback-link']/@href"))
-        newsDict["videoUrl"] = newsVideoUrl
     # 评论区（略）
     except Exception as e:
         print(e)
     return newsDict
+
+
+# 分析联合早报首页，获取各板块链接
+def parseIndexZaoBao(html):
+    baseUrl = "https://www.zaobao.com.sg"
+    sections = []
+    try:
+        # 获取导航栏节点
+        divNav = getFromList(html.xpath("//div[@class='row align-items-center row no-gutters']"))
+        divDropdowList = divNav.xpath("./div")
+
+        sections = []
+        for div in divDropdowList:
+            section = {}
+            # 获取一级栏目节点
+            firstSectionLink = getFromList(div.xpath("./a"))
+            firstSectionName = getFromList(div.xpath("./a/span/text()"))
+
+            # 获取二级栏目节点
+            div = div.xpath("./div[@class='dropdown-menu']")
+            if len(div) == 0:
+                print("no second section")
+            else:
+                aDropDownItemList = div.xpath(".//a[@class='topnav-link dropdown-item']")
+
+            for aDropDownItem in aDropDownItemList:
+                secondSectionName = getFromList(aDropDownItem.xpath("./text()"))
+                secondSectionLink = getFromList(aDropDownItem.xpath("./@href"))
+                sections[firstSectionName + "/" + secondSectionName] = baseUrl + firstSectionLink + secondSectionLink
+                sections.append(section)
+                print(section)
+    except Exception as e:
+        print(e)
+
+    return sections
