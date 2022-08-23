@@ -7,6 +7,10 @@ from request.requestHttp import getHttpResponse
 if __name__ == '__main__':
     url = "https://www.zaobao.com.sg/global"
 
+    response = getHttpResponse(url)
+    html = etree.HTML(response.text)
+
+    parseIndexZaoBao(html)
 
     # oldNews = {"title": "习近平李克强致电慰问岸田文雄感染新冠"}
     #

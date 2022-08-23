@@ -365,9 +365,8 @@ def parseIndexZaoBao(html):
 
         sections = []
         for div in divDropdowList:
-            section = {}
             # 获取一级栏目节点
-            firstSectionLink = getFromList(div.xpath("./a"))
+            firstSectionLink = getFromList(div.xpath("./a/@href"))
             firstSectionName = getFromList(div.xpath("./a/span/text()"))
 
             # 获取二级栏目节点
@@ -375,14 +374,15 @@ def parseIndexZaoBao(html):
             if len(div) == 0:
                 print("no second section")
             else:
-                aDropDownItemList = div.xpath(".//a[@class='topnav-link dropdown-item']")
+                aDropDownItemList = div[0].xpath(".//a[@class='topnav-link dropdown-item']")
 
-            for aDropDownItem in aDropDownItemList:
-                secondSectionName = getFromList(aDropDownItem.xpath("./text()"))
-                secondSectionLink = getFromList(aDropDownItem.xpath("./@href"))
-                sections[firstSectionName + "/" + secondSectionName] = baseUrl + firstSectionLink + secondSectionLink
-                sections.append(section)
-                print(section)
+                for aDropDownItem in aDropDownItemList:
+                    section = {}
+                    secondSectionLink = getFromList(aDropDownItem.xpath("./@href"))
+                    secondSectionName = getFromList(aDropDownItem.xpath("./text()"))
+                    section[firstSectionName + "/" + secondSectionName] = baseUrl + firstSectionLink + secondSectionLink
+                    sections.append(section)
+                    print(section)
     except Exception as e:
         print(e)
 
